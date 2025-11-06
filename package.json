@@ -12,7 +12,9 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
-    "openai": "^4.20.0"
+    "js-yaml": "^4.1.0",
+    "openai": "^4.20.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
@@ -30,4 +32,3 @@
   "author": "Kaan Karaca",
   "license": "MIT"
 }
-

@@ -1,0 +1,468 @@
+openapi: 3.0.3
+info:
+  title: ChatdenPO API
+  description: |
+    🤖 **AI-Powered PLM Order Management System**
+    
+    ChatGPT ile PLM Sipariş Dağılım API - Doğal dil komutlarıyla otomatik sipariş oluşturma.
+    
+    ## 🎯 Özellikler
+    
+    - ✅ **OpenAI GPT-4o-mini** ile doğal dil parsing
+    - ✅ **Çoklu renk desteği** - tek Request'te birleştirilmiş
+    - ✅ **Infor FashionPLM** entegrasyonu
+    - ✅ **Asortisman bazlı** beden dağılımı
+    - ✅ **Kanal dağılımı** (Mağaza/İnternet)
+    
+    ## 📖 Kullanım
+    
+    API doğal dilde verilen sipariş komutlarını otomatik olarak parse edip, 
+    asortisman bazlı hesaplamalarla PLM'de sipariş oluşturur.
+    
+    ## 🔗 Links
+    
+    - **GitHub**: [KaanKaraca93/chat2PO](https://github.com/KaanKaraca93/chat2PO)
+    - **Heroku**: [peaceful-spire-06845](https://peaceful-spire-06845-5624ee00a891.herokuapp.com/)
+    
+  version: 1.0.0
+  contact:
+    name: Kaan Karaca
+    email: kaan.karaca93@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://peaceful-spire-06845-5624ee00a891.herokuapp.com
+    description: Production (Heroku)
+  - url: http://localhost:5000
+    description: Local Development
+
+tags:
+  - name: Order Management
+    description: Sipariş oluşturma ve hesaplama işlemleri
+  - name: Testing
+    description: Test ve debug endpoint'leri
+  - name: System
+    description: Sistem bilgileri
+
+paths:
+  /:
+    get:
+      tags:
+        - System
+      summary: API Bilgileri
+      description: API hakkında genel bilgi ve örnek kullanımlar
+      responses:
+        '200':
+          description: API bilgileri başarıyla döndürüldü
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health Check
+      description: API durumunu kontrol eder
+      responses:
+        '200':
+          description: API çalışıyor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /create-order:
+    post:
+      tags:
+        - Order Management
+      summary: Sipariş Oluştur (Önerilen)
+      description: |
+        Doğal dil komutuyla PLM'de otomatik sipariş oluşturur.
+        
+        **Akış:**
+        1. OpenAI ile komut parse edilir
+        2. PLM'den style detayları çekilir
+        3. Asortisman bazlı dağılım hesaplanır
+        4. PLM'de Request oluşturulur
+        
+        **Çoklu Renk Desteği:**
+        Virgülle ayrılmış birden fazla renk tek Request'te birleştirilir.
+        
+        **Örnek Komutlar:**
+        - `"bej 5000 sadece mağaza"`
+        - `"siyah 10000 %20 internet"`
+        - `"bej 10000 mağaza, gri 5000 %50 internet"`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              single_color:
+                summary: Tek Renk
+                value:
+                  styleId: 325
+                  command: "bej 5000 sadece mağaza"
+                  supplierId: 38
+                  dueDate: "2024-12-31"
+                  udf2: "COLLECTION2024"
+              multi_color:
+                summary: Çoklu Renk
+                value:
+                  styleId: 325
+                  command: "bej 10000 mağaza, gri 5000 %50 internet"
+                  supplierId: 38
+                  dueDate: "2024-12-31"
+                  udf2: "COLLECTION2024"
+              with_internet:
+                summary: İnternet Dağılımlı
+                value:
+                  styleId: 325
+                  command: "siyah rengi 20000 adet %30 internet"
+                  supplierId: 38
+                  dueDate: "2025-01-15"
+                  udf2: "WINTER2024"
+      responses:
+        '200':
+          description: Sipariş başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '400':
+          description: Geçersiz istek
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Sunucu hatası
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /calculate-order:
+    post:
+      tags:
+        - Order Management
+      summary: Sipariş Hesapla (Test)
+      description: |
+        Sadece hesaplama yapar, PLM'e kaydetmez.
+        
+        Test ve doğrulama için kullanılır. Aynı parse ve hesaplama 
+        mantığı kullanılır ama PLM'e yazma adımı atlanır.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateOrderRequest'
+            example:
+              styleId: 325
+              command: "bej 10000 %20 internet"
+      responses:
+        '200':
+          description: Hesaplama başarılı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateOrderResponse'
+        '400':
+          description: Geçersiz istek
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /parse-command:
+    post:
+      tags:
+        - Testing
+      summary: Komut Parse Et (Test)
+      description: |
+        Sadece OpenAI parsing testi yapar.
+        
+        PLM'e erişmeden, sadece doğal dil komutunun nasıl 
+        parse edildiğini gösterir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParseCommandRequest'
+            examples:
+              simple:
+                summary: Basit Format
+                value:
+                  styleId: 325
+                  command: "bej 5000 mağaza"
+              detailed:
+                summary: Detaylı Format
+                value:
+                  styleId: 325
+                  command: "BYZ renge 20000 adet sipariş geç %10'u internet kanalına ayrılsın"
+              multi_color:
+                summary: Çoklu Renk
+                value:
+                  styleId: 325
+                  command: "bej 10000 mağaza, gri 5000 %50 internet, siyah 3000 %20 internet"
+      responses:
+        '200':
+          description: Parse başarılı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseCommandResponse'
+        '400':
+          description: Parse hatası
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ApiInfo:
+      type: object
+      properties:
+        service:
+          type: string
+          example: "ChatdenPO API"
+        version:
+          type: string
+          example: "1.0.0"
+        description:
+          type: string
+        endpoints:
+          type: object
+        mainExample:
+          type: object
+        calculateExample:
+          type: object
+        testExample:
+          type: object
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "OK"
+        timestamp:
+          type: string
+          format: date-time
+        service:
+          type: string
+          example: "ChatdenPO API"
+        version:
+          type: string
+          example: "1.0.0"
+        openai_configured:
+          type: boolean
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - styleId
+        - command
+      properties:
+        styleId:
+          type: integer
+          description: PLM'deki Style ID
+          example: 325
+        command:
+          type: string
+          description: |
+            Doğal dilde sipariş komutu.
+            
+            **Formatlar:**
+            - `"renk miktar kanal"`
+            - `"renk miktar %X internet"`
+            - `"renk1 miktar1 kanal1, renk2 miktar2 kanal2"`
+          example: "bej 10000 mağaza, gri 5000 %50 internet"
+        supplierId:
+          type: integer
+          description: Tedarikçi ID (opsiyonel, default 38)
+          default: 38
+          example: 38
+        dueDate:
+          type: string
+          format: date
+          description: Teslim tarihi (YYYY-MM-DD)
+          example: "2024-12-31"
+        udf2:
+          type: string
+          description: User Defined Field 2 (opsiyonel)
+          example: "COLLECTION2024"
+
+    CalculateOrderRequest:
+      type: object
+      required:
+        - styleId
+        - command
+      properties:
+        styleId:
+          type: integer
+          example: 325
+        command:
+          type: string
+          example: "bej 10000 %20 internet"
+
+    ParseCommandRequest:
+      type: object
+      required:
+        - styleId
+        - command
+      properties:
+        styleId:
+          type: integer
+          example: 325
+        command:
+          type: string
+          example: "bej 10000 mağaza, gri 5000 %50 internet"
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+        message:
+          type: string
+        isMultiColor:
+          type: boolean
+        data:
+          type: object
+          properties:
+            totalColors:
+              type: integer
+            successfulColors:
+              type: integer
+            failedColors:
+              type: integer
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderResult'
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderError'
+
+    CalculateOrderResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        isMultiColor:
+          type: boolean
+        data:
+          type: object
+          properties:
+            totalColors:
+              type: integer
+            successfulColors:
+              type: integer
+            failedColors:
+              type: integer
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/CalculationResult'
+
+    ParseCommandResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        isMultiColor:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParsedOrder'
+
+    OrderResult:
+      type: object
+      properties:
+        colorCode:
+          type: string
+          example: "BEJ"
+        quantity:
+          type: integer
+          example: 10000
+        internetPercent:
+          type: integer
+          example: 0
+        plmResponse:
+          type: object
+          description: PLM'den dönen response
+
+    CalculationResult:
+      type: object
+      properties:
+        colorCode:
+          type: string
+        quantity:
+          type: integer
+        internetPercent:
+          type: integer
+        distribution:
+          type: object
+          properties:
+            styleId:
+              type: integer
+            styleColorwayId:
+              type: integer
+            sizeRangeId:
+              type: integer
+            input:
+              type: object
+            channels:
+              type: object
+            distribution:
+              type: array
+              items:
+                type: object
+
+    ParsedOrder:
+      type: object
+      properties:
+        styleId:
+          type: integer
+        colorCode:
+          type: string
+        quantity:
+          type: integer
+        internetPercent:
+          type: integer
+
+    OrderError:
+      type: object
+      properties:
+        colorCode:
+          type: string
+        error:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+        error:
+          type: string
+

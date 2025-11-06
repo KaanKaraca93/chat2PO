@@ -1,6 +1,9 @@
 const express = require('express');
 const axios = require('axios');
 const OpenAI = require('openai');
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const yaml = require('js-yaml');
 require('dotenv').config();
 
 const app = express();
@@ -1019,6 +1022,33 @@ app.post('/create-order', async (req, res) => {
 });
 
 /**
+ * Swagger Documentation
+ */
+// Load swagger.yaml file
+let swaggerDocument;
+try {
+    const swaggerFile = fs.readFileSync('./swagger.yaml', 'utf8');
+    swaggerDocument = yaml.load(swaggerFile);
+} catch (error) {
+    console.error('⚠️  Swagger dosyası yüklenemedi:', error.message);
+    swaggerDocument = {
+        openapi: '3.0.0',
+        info: {
+            title: 'ChatdenPO API',
+            version: '1.0.0',
+            description: 'Swagger dosyası yüklenemedi'
+        },
+        paths: {}
+    };
+}
+
+// Swagger UI endpoint
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ChatdenPO API Docs'
+}));
+
+/**
  * Health Check Endpoint
  */
 app.get('/health', (req, res) => {
@@ -1043,6 +1073,7 @@ app.get('/', (req, res) => {
             createOrder: 'POST /create-order - TAM SİPARİŞ: Parse → PLM → Calculate → CREATE (ÖNERİLEN)',
             calculateOrder: 'POST /calculate-order - Hesaplama: Parse → PLM → Calculate (TEST)',
             parseCommand: 'POST /parse-command - Sadece doğal dil parse (TEST)',
+            apiDocs: 'GET /api-docs - Swagger UI Documentation 📚',
             health: 'GET /health - Health check'
         },
         mainExample: {
@@ -1090,6 +1121,7 @@ app.listen(PORT, () => {
     console.log(`   🎯 POST   http://localhost:${PORT}/create-order      - TAM SİPARİŞ (OpenAI + PLM + Calculate + CREATE)`);
     console.log(`   📊 POST   http://localhost:${PORT}/calculate-order  - Hesaplama (OpenAI + PLM + Calculate)`);
     console.log(`   🟣 POST   http://localhost:${PORT}/parse-command    - OpenAI Parsing (TEST)`);
+    console.log(`   📚 GET    http://localhost:${PORT}/api-docs         - Swagger Documentation`);
     console.log(`   🟡 GET    http://localhost:${PORT}/health           - Health check`);
     console.log(`   ⚪ GET    http://localhost:${PORT}/                 - API info`);
     console.log('='.repeat(60));
