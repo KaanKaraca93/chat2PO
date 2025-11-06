@@ -59,6 +59,14 @@ Server `http://localhost:5000` adresinde çalışacak.
 
 ## 📡 API Endpoints
 
+### 📚 Swagger Documentation
+
+**Interactive API Docs:**
+- **Production**: [https://peaceful-spire-06845-5624ee00a891.herokuapp.com/api-docs](https://peaceful-spire-06845-5624ee00a891.herokuapp.com/api-docs)
+- **Local**: http://localhost:5000/api-docs
+
+Swagger UI üzerinden tüm endpoint'leri test edebilir ve detaylı dokümantasyonu görebilirsiniz.
+
 ### 🎯 POST `/create-order` (Önerilen)
 
 Doğal dil komutuyla PLM'de sipariş oluşturur.
