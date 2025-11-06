@@ -1,0 +1,17 @@
+# .env dosyası için template
+# Bu dosyayı .env olarak kaydedin ve değerleri girin
+
+# OpenAI API Key (ZORUNLU)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Port (optional, defaults to 3000)
+PORT=3000
+
+# PLM OAuth Credentials (optional, hardcoded values kullanılacak development'ta)
+PLM_CLIENT_ID=
+PLM_CLIENT_SECRET=
+PLM_USERNAME=
+PLM_PASSWORD=
+PLM_TOKEN_URL=https://mingle-sso.eu1.inforcloudsuite.com:443/HA286TFZ2VY8TRHK_PRD/as/token.oauth2
+PLM_TENANT=HA286TFZ2VY8TRHK_PRD
+
